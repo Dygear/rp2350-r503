@@ -7,11 +7,15 @@ pub mod handlers;
 use app::AppTx;
 use defmt::*;
 use defmt_rtt as _;
-use embassy_executor::Spawner;
+use embassy_executor::{Executor, Spawner};
 use embassy_rp::{
     bind_interrupts,
     gpio::{Level, Output},
+    multicore::{Stack, spawn_core1},
+    peripherals::PIO0,
     peripherals::{UART0, USB},
+    pio::{InterruptHandler, Pio},
+    pio_programs::ws2812::{PioWs2812, PioWs2812Program},
     uart::{self, BufferedInterruptHandler, BufferedUart},
     usb,
 };
@@ -24,13 +28,33 @@ use postcard_rpc::{
     sender_fmt,
     server::{Dispatch, Sender, Server},
 };
+use smart_leds::RGB8;
 use static_cell::{ConstStaticCell, StaticCell};
 use uartbridge_icd::{UartFrame, UartRecvTopic};
 
 bind_interrupts!(pub struct Irqs {
     USBCTRL_IRQ => usb::InterruptHandler<USB>;
     UART0_IRQ => BufferedInterruptHandler<UART0>;
+    PIO0_IRQ_0 => InterruptHandler<PIO0>;
 });
+
+/// Input a value 0 to 255 to get a color value
+/// The colours are a transition r - g - b - back to r.
+fn wheel(mut wheel_pos: u8) -> RGB8 {
+    wheel_pos = 255 - wheel_pos;
+    if wheel_pos < 85 {
+        return (255 - wheel_pos * 3, 0, wheel_pos * 3).into();
+    }
+    if wheel_pos < 170 {
+        wheel_pos -= 85;
+        return (0, wheel_pos * 3, 255 - wheel_pos * 3).into();
+    }
+    wheel_pos -= 170;
+    (wheel_pos * 3, 255 - wheel_pos * 3, 0).into()
+}
+
+static mut CORE1_STACK: Stack<4096> = Stack::new();
+static EXECUTOR1: StaticCell<Executor> = StaticCell::new();
 
 fn usb_config(serial: &'static str) -> Config<'static> {
     let mut config = Config::new(0x16c0, 0x27DD);
@@ -87,6 +111,13 @@ async fn main(spawner: Spawner) {
     let ser_buf = SERIAL_STRING.init(ser_buf);
     let ser_buf = core::str::from_utf8(ser_buf.as_slice()).unwrap();
 
+    // NeoPixel Setup (PIN 21)
+    let Pio {
+        mut common, sm0, ..
+    } = Pio::new(p.PIO0, Irqs);
+    let program = PioWs2812Program::new(&mut common);
+    let neo = PioWs2812::new(&mut common, sm0, p.DMA_CH0, p.PIN_21, &program);
+
     // UART
     static TX_BUF: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0u8; 1024]);
     static RX_BUF: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0u8; 1024]);
@@ -108,7 +139,7 @@ async fn main(spawner: Spawner) {
     let driver = usb::Driver::new(p.USB, Irqs);
     let pbufs = app::PBUFS.take();
     let config = usb_config(ser_buf);
-    let led = Output::new(p.PIN_25, Level::Low);
+    let led = Output::new(p.PIN_7, Level::Low);
 
     let context = app::Context {
         unique_id,
@@ -135,11 +166,43 @@ async fn main(spawner: Spawner) {
     spawner.must_spawn(usb_task(device));
     spawner.must_spawn(logging_task(sender));
 
+    spawn_core1(
+        p.CORE1,
+        unsafe { &mut *core::ptr::addr_of_mut!(CORE1_STACK) },
+        move || {
+            let executor1 = EXECUTOR1.init(Executor::new());
+            executor1.run(|spawner| unwrap!(spawner.spawn(core1_task(neo))));
+        },
+    );
+
     // Begin running!
     loop {
         // If the host disconnects, we'll return an error here.
         // If this happens, just wait until the host reconnects
         let _ = server.run().await;
+    }
+}
+
+#[embassy_executor::task]
+async fn core1_task(mut neo: PioWs2812<'static, PIO0, 0, 1>) {
+    info!("Hello from core 1");
+
+    // Loop forever making RGB values and pushing them out to the WS2812.
+    let mut ticker = Ticker::every(Duration::from_millis(25));
+
+    // NeoPixel Setup
+    const NUM_LEDS: usize = 1;
+    let mut data = [RGB8::default(); NUM_LEDS];
+
+    loop {
+        info!("Core 0: NeoPixel Loop");
+        for j in 0..(256 * 3) {
+            for i in 0..NUM_LEDS {
+                data[i] = wheel((((i * 256) as u16 / NUM_LEDS as u16 + j as u16) & 255) as u8);
+            }
+            neo.write(&data).await;
+            ticker.next().await;
+        }
     }
 }
 

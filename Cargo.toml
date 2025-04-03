@@ -34,6 +34,7 @@ postcard-rpc = { version = "0.11.3", features = ["embassy-usb-0_3-server"] }
 postcard = { version = "1.1" }
 postcard-schema = { version = "0.2.0", features = ["derive"] }
 portable-atomic = { version = "1.6.0", features = ["critical-section"] }
+smart-leds = "0.3.0"
 static_cell = "2.1"
 r503 = { git = "https://github.com/Dygear/r503.git" }
 uartbridge-icd = { path = "uartbridge-icd" }
