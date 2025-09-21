@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html data-bs-theme="light">
+    <head>
+        <title>Finger Print Sensor HTML / JS Front End</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+        <link async preload rel="stylesheet" crossorigin="anonymous" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" href="//cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css">
+        <style type="text/css">
+            .inputfile {
+                width: 0.1px;
+                height: 0.1px;
+                opacity: 0;
+                overflow: hidden;
+                position: absolute;
+                z-index: -1;
+            }
+            .inputfile + label {
+                cursor: pointer;
+            }
+            img.rounded {
+                width: 192px;
+                height: 256px;
+            }
+            div.rounded-circle {
+                width: 192px;
+                height: 192px;
+                margin: 32px auto;
+                font-size: 8em;
+                background: radial-gradient(ellipse at center, #cedce7 0%,#596a72 100%);
+                text-align: center;
+                line-height: 192px;
+                text-shadow: 0px 0px 8px #000;
+                color: #FFF;
+            }
+        </style>
+    </head>
+    <body class="d-flex flex-column h-100">
+        <style>
+            .container {
+                margin-top: -1px;
+                margin-bottom: -1px;
+            }
+            .row {
+                margin-bottom: 1.5em;
+            }
+            .form-control {
+                text-align: center;
+            }
+            #clock {
+                text-align: center;
+            }
+            #clock #time span {
+                font-size: 110px;
+                width: 160px;
+                display: inline-block;
+                text-align: center;
+                font: monospace;
+            }
+            #clock #date span {
+                font-size: 55px;
+                width: 320px;
+                display: inline-block;
+                text-align: center;
+                font: monospace;
+            }
+        </style>
+        <main class="container">
+            <div id="clock">
+                <span id="time">
+                    <span id="hrs">00</span>
+                    <span>:</span>
+                    <span id="min">00</span>
+                    <span>:</span>
+                    <span id="sec">00</span>
+                </span>
+                <br />
+                <span id="date">
+                    <span id="m">Month</span>
+                    <span id="d">Day</span>
+                    <span id="y">Year</span>
+                </span>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <input class="form-control form-control-lg text-primary" type="text" id="badge" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">1</button>
+                </div>
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">2</button>
+                </div>
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">3</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">4</button>
+                </div>
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">5</button>
+                </div>
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">6</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">7</button>
+                </div>
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">8</button>
+                </div>
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">9</button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-success" id="fpsd"><i class="fa-solid fa-fingerprint"></i></button>
+                </div>
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-secondary number">0</button>
+                </div>
+                <div class="col-sm-4">
+                    <button class="btn btn-block btn-lg btn-outline-danger" id="clear"><i class="fa-regular fa-broom-wide"></i></button>
+                </div>
+            </div>
+        </main>
+        <footer class="bg-black mt-auto py-3">
+            <div class="container" id="footer">&nbsp;</div>
+        </footer>
+        <script>
+            'use strict';
+
+            // Time Clock Interface
+            setInterval(() => {
+                let currentTime = new Date();
+                hrs.innerHTML = zeroPad(currentTime.getHours());
+                min.innerHTML = zeroPad(currentTime.getMinutes());
+                sec.innerHTML = zeroPad(currentTime.getSeconds());
+                y.innerHTML = currentTime.getFullYear();
+                m.innerHTML = month(currentTime.getMonth());
+                d.innerHTML = day(currentTime.getDate());
+            }, 1000);
+            function zeroPad(int) {
+                if (int < 10)
+                    return `0${int}`;
+                return int
+            }
+            const month = month => {
+                switch (month) {
+                    case  0: return 'January'
+                    case  1: return 'Febuary'
+                    case  2: return 'March'
+                    case  3: return 'April'
+                    case  4: return 'May'
+                    case  5: return 'June'
+                    case  6: return 'July'
+                    case  7: return 'August'
+                    case  8: return 'September'
+                    case  9: return 'October'
+                    case 10: return 'November'
+                    case 11: return 'December'
+                }
+            }
+            function day(day) {
+                if (day == 1 || day == 21 || day == 31)
+                    return `${day}st`;
+                if (day == 2 || day == 22)
+                    return `${day}nd`;
+                if (day == 3 || day == 23)
+                    return `${day}rd`;
+
+                return `${day}th`;
+            }
+
+            // Finger Print Keypad UI
+            const digits = document.querySelectorAll('.number');
+            digits.forEach (digit => {
+                digit.addEventListener('click', (e) => {
+                    badge.value += parseInt(e.srcElement.innerText);
+                });
+            });
+            clear.addEventListener('click', () => {
+                badge.value = '';
+            });
+            if (typeof enroll !== 'undefined') {
+                enroll.addEventListener('click', async () => {
+                    await enroll_user();
+                    dialog.showModal();
+                });
+            }
+
+            // Finger Print Functions
+            let device = null;
+            document.addEventListener('DOMContentLoaded', () => {
+                device = new WebUSBDevice(fpsd, footer, 0x1EE7);
+                fpsd.addEventListener('click', async () => {
+                    if (device.device === null) {
+                        await device.connect();
+                    } else {
+                        if (badge.value === "") {
+                            footer.classList.add('text-warning');
+                            footer.innerHTML = "Must enter a Badge Number first.";
+                            badge.focus();
+                            return;
+                        }
+                        const params = new URLSearchParams();
+                        const fps = {
+                            match: true,
+                            serialNumber: device.device.serialNumber,
+                            badgeNumber: badge.value,
+                        };
+                        for (const [key, value] of Object.entries(fps)) {
+                            params.append(`fps[${key}]`, String(value));
+                        }
+                        // Submit the badge Number to the server and get back the range of moduleIds for that user.
+                        const data = await fetch(window.location.href, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                            },
+                            body: params
+                        })
+                        .then(response => {
+                            if (!response.ok)
+                                throw new Error(`HTTP ${response.status}`);
+                            return response.json();
+                        })
+                        .catch(err => {
+                            console.error('Request failed:', err);
+                        });
+
+                        if (data === false) {
+                            footer.classList.add('text-warning');
+                            footer.innerHTML = 'No such badge found';
+                            badge.value = '';
+                            return;
+                        }
+                        try {
+                            footer.classList.remove('text-warning');
+                            footer.innerHTML = 'Place finger on sensor';
+                            let [modelId, matchScore] = await device.autoIdentify(
+                                data.securityLevel,
+                                data.startPosition,
+                                data.endPosition,
+                                data.keySteps,
+                                data.attempts
+                            );
+                            footer.innerHTML = `Identified ${modelId} with a ${matchScore}% match score`;
+                            success(data.userId, modelId, matchScore);
+                        } catch (e) {
+                            footer.classList.add('text-warning');
+                            footer.innerHTML = `Error: ${e.message}`;
+                            badge.value = '';
+                        }
+                    }
+                });
+                // Dynamic Deligation for Click Interception on Dialog
+                const container = document.getElementById('dialog');
+                container.addEventListener('click', async (e) => {
+                    if (e.target.matches('#enrollSelected')) {
+                        e.preventDefault();
+                        let userId = document.querySelector('[name="enroll[userId]"]').value;
+                        enroll_user(userId);
+                    }
+                    if (e.target.matches('[name=fingerId]')) {
+                        let userId = document.querySelector('[name="enroll[userId]"]').value;
+                        let fingerId = e.target.value;
+                        console.log(`userId = ${userId}; fingerId = ${fingerId}`);
+                        try {
+                            let modelId = await device.autoEnroll(1536, 0, 0, 1, 1);
+                            e.target.innerHTML = modelId;
+                            e.target.classList.remove('btn-secondary');
+                            e.target.classList.add('btn-primary');
+                            e.target.disabled = true;
+                            save_finger(userId, fingerId, modelId);
+                        } catch (e) {
+                            footer.classList.add('text-warning');
+                            footer.innerHTML = `Error: ${e}`;
+                        }
+                    }
+                    if (e.target.matches('#enrollUp')) {
+                        e.preventDefault();
+                        let select = document.querySelector('[name="enroll[userId]"]');
+                        if (select.selectedIndex > 0) {
+                            select.selectedIndex--;
+                            select.options[select.selectedIndex].scrollIntoView({ block: 'nearest' });
+                            select.dispatchEvent(new Event('change'));
+                        }
+                    }
+                    if (e.target.matches('#enrollDn')) {
+                        e.preventDefault();
+                        let select = document.querySelector('[name="enroll[userId]"]');
+                        if (select.selectedIndex < select.options.length - 1) {
+                            select.selectedIndex++;
+                            select.options[select.selectedIndex].scrollIntoView({ block: 'nearest' });
+                            select.dispatchEvent(new Event('change'));
+                        }
+                    }
+                    if (e.target.matches('[data-letter]')) {
+                        e.preventDefault();
+                        let select = document.querySelector('[name="enroll[userId]"]');
+                        const up = e.target.dataset.letter;
+                        for (let i = 0; i < select.options.length; i++) {
+                            const text = select.options[i].text.trim();
+                            if (text.charAt(0).toUpperCase() === up) {
+                                select.selectedIndex = i;
+                                select.options[select.selectedIndex].scrollIntoView({ block: 'nearest' });
+                                select.dispatchEvent(new Event('change'));
+                                return;
+                            }
+                        }
+                    }
+                });
+            });
+            async function success(userId, modelId, matchScore) {
+                badge.value = '';
+                footer.innerHTML = '';
+                console.log(`success(${userId}, ${modelId}, ${matchScore})`);
+                await get_user(userId);
+                dialog.showModal();
+            };
+            async function get_user(userId) {
+                const params = new URLSearchParams();
+                params.append(`profile[userId]`, String(userId));
+                const data = await fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    body: params
+                })
+                .then(response => {
+                    if (!response.ok)
+                        throw new Error(`HTTP ${response.status}`);
+                    return response.text();
+                })
+                .catch(err => {
+                    console.error('Request failed:', err);
+                });
+
+                dialog.innerHTML = data;
+            };
+            async function enroll_user(userId = null) {
+                const params = new URLSearchParams();
+                params.append(`enroll[serialNumber]`, device.device.serialNumber);
+                if (userId !== null) {
+                    params.append(`enroll[userId]`, userId);
+                }
+                const data = await fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    body: params
+                })
+                .then(response => {
+                    if (!response.ok)
+                        throw new Error(`HTTP ${response.status}`);
+                    return response.text();
+                })
+                .catch(err => {
+                    console.error('Request failed:', err);
+                });
+
+                dialog.innerHTML = data;
+            };
+            async function save_finger(userId, fingerId, modelId) {
+                const params = new URLSearchParams();
+                params.append(`fps[serialNumber]`, device.device.serialNumber);
+                params.append(`fps[enroll]`, true);
+                params.append(`fps[userId]`, parseInt(userId));
+                params.append(`fps[modelId]`, parseInt(modelId));
+                params.append(`fps[fingerId]`, parseInt(fingerId));
+                const data = await fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+                    },
+                    body: params
+                })
+                .then(response => {
+                    if (!response.ok)
+                        throw new Error(`HTTP ${response.status}`);
+                    return response.text();
+                })
+                .catch(err => console.error('Request failed:', err));
+                console.log(data);
+            };
+        </script>
+        <script type="module" src="/WebUSBDevice.js"></script>
+        <dialog id="dialog" style="padding: 1em; border-radius: 1em; min-width: 75vw"></dialog>
+    </body>
+</html>

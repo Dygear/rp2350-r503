@@ -68,7 +68,7 @@ pub type AppDriver = usb::Driver<'static, USB>;
 pub type AppStorage = WireStorage<ThreadModeRawMutex, AppDriver, 256, 256, 64, 256>;
 /// BufStorage is the space used for receiving and sending frames. These values
 /// control the largest frames we can send or receive.
-pub type BufStorage = PacketBuffers<1024, 1024>;
+pub type BufStorage = PacketBuffers<2048, 2048>;
 /// AppTx is the type of our sender, which is how we send information to the client
 pub type AppTx = WireTxImpl<ThreadModeRawMutex, AppDriver>;
 /// AppRx is the type of our receiver, which is how we receive information from the client
