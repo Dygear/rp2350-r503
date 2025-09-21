@@ -55,7 +55,6 @@ pub struct TaskContext {
 /// These aliases are used to keep the types from getting too out of hand.
 ///
 /// If you are using the RP2040 - you shouldn't need to modify any of these!
-
 /// This alias describes the type of driver we will need. In this case, we
 /// are using the embassy-usb driver with the RP2040 USB peripheral
 pub type AppDriver = usb::Driver<'static, USB>;

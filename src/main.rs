@@ -57,7 +57,7 @@ static mut CORE1_STACK: Stack<4096> = Stack::new();
 static EXECUTOR1: StaticCell<Executor> = StaticCell::new();
 
 fn usb_config(serial: &'static str) -> Config<'static> {
-    let mut config = Config::new(0x16c0, 0x27DD);
+    let mut config = Config::new(0x1EE7, 0x1337);
     config.manufacturer = Some("MimoCAD");
     config.product = Some("MimoFPS");
     config.serial_number = Some(serial);
@@ -119,8 +119,9 @@ async fn main(spawner: Spawner) {
     let neo = PioWs2812::new(&mut common, sm0, p.DMA_CH0, p.PIN_21, &program);
 
     // UART
-    static TX_BUF: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0u8; 1024]);
-    static RX_BUF: ConstStaticCell<[u8; 1024]> = ConstStaticCell::new([0u8; 1024]);
+    static UART_BUF_LEN: usize = 2048;
+    static TX_BUF: ConstStaticCell<[u8; UART_BUF_LEN]> = ConstStaticCell::new([0u8; UART_BUF_LEN]);
+    static RX_BUF: ConstStaticCell<[u8; UART_BUF_LEN]> = ConstStaticCell::new([0u8; UART_BUF_LEN]);
     static UART_MTX: StaticCell<Mutex<ThreadModeRawMutex, BufferedUart<'static, UART0>>> =
         StaticCell::new();
     let serial = UART_MTX.init_with(|| {
@@ -197,8 +198,8 @@ async fn core1_task(mut neo: PioWs2812<'static, PIO0, 0, 1>) {
     loop {
         info!("Core 0: NeoPixel Loop");
         for j in 0..(256 * 3) {
-            for i in 0..NUM_LEDS {
-                data[i] = wheel((((i * 256) as u16 / NUM_LEDS as u16 + j as u16) & 255) as u8);
+            for (idx, led) in data.iter_mut().enumerate() {
+                *led = wheel((((idx * 256) as u16 / NUM_LEDS as u16 + j as u16) & 255) as u8)
             }
             neo.write(&data).await;
             ticker.next().await;
